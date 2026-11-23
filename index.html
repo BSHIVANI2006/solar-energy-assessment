@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Solar Energy Assessment</title>
+<style>
+:root{--green:#16834a;--dark:#153b2a;--light:#f1f8f3;--text:#20332a}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial, sans-serif;background:#f4f7f5;color:var(--text)}
+header{background:linear-gradient(120deg,#0d6037,#27a45d);color:white;padding:30px 7%;text-align:center}
+header h1{margin:0 0 10px;font-size:clamp(25px,4vw,38px)}
+header p{margin:0;opacity:.95}
+main{max-width:1050px;margin:28px auto;padding:0 18px}
+.panel{background:white;border-radius:16px;padding:24px;box-shadow:0 5px 22px #163d2512;margin-bottom:22px}
+h2{color:var(--dark);margin-top:0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+label{display:block;font-weight:700;font-size:14px;margin-bottom:7px}
+input{width:100%;padding:12px;border:1px solid #cbd8cf;border-radius:8px;font-size:15px}
+input:focus{outline:2px solid #8ed0a8;border-color:var(--green)}
+small{display:block;color:#607268;margin-top:5px;line-height:1.4}
+button{background:var(--green);color:white;border:0;border-radius:9px;padding:13px 22px;font-size:16px;font-weight:bold;cursor:pointer;margin-top:18px}
+button:hover{background:#10683a}
+.error{color:#b42318;margin-top:12px;font-weight:bold}
+.results{display:none}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.metric{background:var(--light);border:1px solid #dceee1;padding:17px;border-radius:12px}
+.metric span{display:block;color:#547060;font-size:13px;margin-bottom:8px}
+.metric strong{font-size:clamp(19px,3vw,27px);color:var(--dark)}
+.note{background:#fff8e8;border-left:4px solid #e4a52e;padding:13px;border-radius:7px;line-height:1.5}
+.bar-wrap{background:#e6eee8;height:15px;border-radius:20px;overflow:hidden;margin:10px 0}
+.bar{height:100%;background:linear-gradient(90deg,#16834a,#8acb55);width:0%}
+footer{text-align:center;color:#66766d;padding:18px;font-size:13px}
+@media(max-width:650px){.grid,.cards{grid-template-columns:1fr}.panel{padding:18px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>☀️ Smart Solar Energy Assessment</h1>
+  <p>Estimate your rooftop solar potential, electricity savings and environmental impact.</p>
+</header>
+<main>
+  <section class="panel">
+    <h2>Enter Building Details</h2>
+    <p>Enter the information below to get an approximate rooftop solar assessment.</p>
+    <form id="solarForm">
+      <div class="grid">
+        <div>
+          <label for="location">Building location</label>
+          <input id="location" type="text" placeholder="e.g. Bengaluru, Karnataka" required>
+        </div>
+        <div>
+          <label for="roof">Available rooftop area (sq. ft.)</label>
+          <input id="roof" type="number" min="1" step="1" placeholder="e.g. 1000" required>
+          <small>Use the usable, relatively unshaded roof area.</small>
+        </div>
+        <div>
+          <label for="sun">Average peak sunlight hours per day</label>
+          <input id="sun" type="number" min="1" max="10" step="0.1" value="5" required>
+          <small>Use a local solar resource estimate where available.</small>
+        </div>
+        <div>
+          <label for="tariff">Electricity tariff (₹ per kWh)</label>
+          <input id="tariff" type="number" min="0.1" step="0.1" value="7" required>
+        </div>
+        <div>
+          <label for="bill">Average monthly electricity bill (₹)</label>
+          <input id="bill" type="number" min="0" step="1" placeholder="e.g. 2500" required>
+        </div>
+        <div>
+          <label for="emission">Grid emission factor (kg CO₂ per kWh)</label>
+          <input id="emission" type="number" min="0" step="0.01" value="0.7" required>
+          <small>Default is an illustrative value. Replace with an appropriate local factor for formal analysis.</small>
+        </div>
+      </div>
+      <button type="submit">Assess Solar Potential</button>
+      <div class="error" id="error" role="alert"></div>
+    </form>
+  </section>
+
+  <section class="panel results" id="results" aria-live="polite">
+    <h2>Your Solar Assessment</h2>
+    <p id="summary"></p>
+    <div class="cards">
+      <div class="metric"><span>Estimated solar capacity</span><strong id="capacity">—</strong></div>
+      <div class="metric"><span>Monthly solar generation</span><strong id="monthly">—</strong></div>
+      <div class="metric"><span>Yearly solar generation</span><strong id="yearly">—</strong></div>
+      <div class="metric"><span>Estimated monthly savings</span><strong id="savings">—</strong></div>
+      <div class="metric"><span>Estimated yearly savings</span><strong id="yearSavings">—</strong></div>
+      <div class="metric"><span>Estimated CO₂ avoided yearly</span><strong id="carbon">—</strong></div>
+    </div>
+    <h3>Estimated monthly electricity demand coverage</h3>
+    <div class="bar-wrap"><div class="bar" id="coverageBar"></div></div>
+    <p id="coverageText"></p>
+    <p class="note" id="recommendation"></p>
+    <button type="button" onclick="window.print()">Print / Save Assessment</button>
+  </section>
+
+  <section class="panel">
+    <h2>How the system works</h2>
+    <p><b>Input:</b> Location, usable rooftop area, peak sunlight hours, electricity tariff and monthly bill.</p>
+    <p><b>Processing:</b> The application estimates system capacity, monthly energy output, savings and avoided emissions using transparent formulas.</p>
+    <p><b>Output:</b> A results dashboard with solar capacity, generation, savings, demand coverage and CO₂ reduction estimates.</p>
+  </section>
+  <section class="panel">
+    <h2>Important assumptions</h2>
+    <ul>
+      <li>For this prototype, 100 sq. ft. of usable roof area is assumed per 1 kW of solar capacity.</li>
+      <li>A performance ratio of 0.75 is used to account approximately for system losses.</li>
+      <li>Generation is estimated as capacity × peak sunlight hours × 30 days × performance ratio.</li>
+      <li>Financial savings assume all estimated solar generation offsets electricity billed at the entered tariff. Actual savings depend on self-consumption, net-metering rules, fixed charges and utility policy.</li>
+      <li>The CO₂ estimate uses the emission factor entered by the user. It is an indicative estimate, not a verified emissions audit.</li>
+      <li>This tool is an educational screening prototype, not a structural, electrical or professional solar feasibility survey.</li>
+    </ul>
+  </section>
+</main>
+<footer>EVS Assignment II · BCS508 · Smart Solar Energy Assessment System</footer>
+<script>
+const form = document.getElementById('solarForm');
+const errorBox = document.getElementById('error');
+const results = document.getElementById('results');
+const money = value => '₹' + Math.round(value).toLocaleString('en-IN');
+const number = value => value.toLocaleString('en-IN', {maximumFractionDigits: 1});
+
+form.addEventListener('submit', function(event) {
+  event.preventDefault();
+  errorBox.textContent = '';
+  const location = document.getElementById('location').value.trim();
+  const roof = Number(document.getElementById('roof').value);
+  const sun = Number(document.getElementById('sun').value);
+  const tariff = Number(document.getElementById('tariff').value);
+  const bill = Number(document.getElementById('bill').value);
+  const emission = Number(document.getElementById('emission').value);
+
+  if (!location || roof <= 0 || sun <= 0 || sun > 10 || tariff <= 0 ||
+      bill < 0 || emission < 0 ||
+      ![roof,sun,tariff,bill,emission].every(Number.isFinite)) {
+    errorBox.textContent = 'Please enter valid values in all fields. Sunlight hours must be between 1 and 10.';
+    results.style.display = 'none';
+    return;
+  }
+
+  const capacity = roof / 100; // assumed 100 sq. ft. per kW
+  const monthlyGeneration = capacity * sun * 30 * 0.75;
+  const yearlyGeneration = monthlyGeneration * 12;
+  const monthlySavings = Math.min(monthlyGeneration * tariff, bill);
+  const yearlySavings = monthlySavings * 12;
+  const yearlyCarbon = yearlyGeneration * emission;
+  const monthlyDemand = tariff > 0 ? bill / tariff : 0;
+  const coverage = monthlyDemand > 0 ? Math.min(100, monthlyGeneration / monthlyDemand * 100) : 0;
+
+  document.getElementById('summary').textContent =
+    'Assessment for ' + location + ' based on the details you entered.';
+  document.getElementById('capacity').textContent = number(capacity) + ' kW';
+  document.getElementById('monthly').textContent = number(monthlyGeneration) + ' kWh';
+  document.getElementById('yearly').textContent = number(yearlyGeneration) + ' kWh';
+  document.getElementById('savings').textContent = money(monthlySavings);
+  document.getElementById('yearSavings').textContent = money(yearlySavings);
+  document.getElementById('carbon').textContent = number(yearlyCarbon) + ' kg';
+  document.getElementById('coverageBar').style.width = coverage + '%';
+  document.getElementById('coverageText').textContent =
+    'Approximately ' + number(coverage) + '% of estimated monthly electricity demand.';
+  document.getElementById('recommendation').textContent =
+    'Preliminary estimate: a system of about ' + number(capacity) +
+    ' kW may fit the entered roof area under the prototype assumptions. ' +
+    'A qualified solar installer should verify roof condition, orientation, shading, electrical safety and local approvals before installation.';
+  results.style.display = 'block';
+  results.scrollIntoView({behavior:'smooth', block:'start'});
+});
+</script>
+</body>
+</html>
